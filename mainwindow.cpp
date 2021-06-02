@@ -134,7 +134,7 @@ void MainWindow::showDatato( unsigned char* data )
 
         ui->PWM_label->setText(QString::number(data[3]));
 
-        //UpdatePlot(data);
+        UpdatePlot(data);
 
         break;
 
@@ -157,14 +157,18 @@ void MainWindow::showDatato( unsigned char* data )
 
                 if( instru == 1 && t <= 1){
 
-                   // qDebug()<< "new point recta";
                     recta( t );
 
                 } else if(instru == 2 && t <= beta){
 
                     curva( t );
 
-                }else if(a_pos <= pos){
+                }else if( instru == 3 && t >= beta){
+
+                    curva( t );
+
+                }
+                else if(a_pos <= pos){
 
                     t = 0;
                     px_1 = px;
@@ -338,7 +342,7 @@ void MainWindow::showDatato( unsigned char* data )
 
          ll = (uint16_t) (wf*0.72);
 
-         //ui->direccion_label->setText(QString::number(wf * 0.79));
+         //ui->a_max_label->setText(QString::number(ll));
 
         break;
 
@@ -528,9 +532,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 
                 qDebug() << "y_curva";
-                Interpolar_curva();
+                //Interpolar_curva();
 
-                //Interpolar_recta();
+                Interpolar_recta();
 
 
                 set_pos = true;
@@ -599,8 +603,6 @@ void MainWindow::Interpolar_curva()
 {
     r = sqrt((I_x*I_x) + (J_y*J_y));
 
-    delta_t = 1/r;
-
     c_x = I_x + px_1;
     c_y = J_y + py_1;
 
@@ -617,11 +619,29 @@ void MainWindow::Interpolar_curva()
     if( delta_y < 0 && delta_x < 0) beta = (float) (PI) + abs(asin( (double) delta_y/r ));
     if( delta_y < 0 && delta_x > 0) beta = (float) (2*PI) - abs(asin( (double) delta_y/r ));
 
-    t = alpha;
 
-    if(alpha == beta){
+    if(alpha == beta && instru == 2){
+
         beta = 2*PI;
+
+    }else if(alpha == beta && instru == 3){
+
+        alpha = 2*PI;
+
     }
+
+
+    if(alpha > beta){
+
+        delta_t = -1/r;
+
+    }else if(alpha < beta){
+
+        delta_t = 1/r;
+
+    }
+
+    t = alpha;
 
     set_pos = true;
 
@@ -659,6 +679,9 @@ void MainWindow::Send_pos()
 
         uint16_t ll = sqrt( (px * px ) + ((700 - py)*(700 - py)));
         uint16_t lr = sqrt( (500 - px )*(500 - px)  + ((700 - py)*(700 - py)));
+
+        ui->vel_max_label->setText(QString::number(lr));
+        ui->a_max_label->setText(QString::number(ll));
 
         //qDebug() << QString::number(ll);
         //qDebug() << QString::number(lr);
@@ -793,6 +816,8 @@ void MainWindow::select_action()
         Interpolar_curva();
         break;
     case 3:
+        qDebug()<< "new curva anti O";
+        Interpolar_curva();
         break;
     }
 
@@ -835,8 +860,8 @@ void MainWindow::resetAll()
     ll= 0, lr =0;
     w = 500;
     h = 700;
-    px = px_2 = px_1= 250;
-    py = py_2 = py_1 = 387;
+   // px = px_2 = px_1= 250;
+   // py = py_2 = py_1 = 387;
     I_x = 0;
     J_y = 0;
     t = 0;

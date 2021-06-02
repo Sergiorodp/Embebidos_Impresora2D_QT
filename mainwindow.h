@@ -157,6 +157,8 @@ private:
 
     Instruccion res;
 
+    // seleccionar que hacer
+
     void select_action();
     void goTo();
 
